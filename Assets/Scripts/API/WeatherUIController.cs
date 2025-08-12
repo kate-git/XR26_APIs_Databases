@@ -3,13 +3,11 @@ using UnityEngine.UI;
 using TMPro;
 using WeatherApp.Services;
 using WeatherApp.Data;
+using System;
+using System.Threading.Tasks;
 
 namespace WeatherApp.UI
 {
-    /// <summary>
-    /// UI Controller for the Weather Application
-    /// Students will connect this to the API client and handle user interactions
-    /// </summary>
     public class WeatherUIController : MonoBehaviour
     {
         [Header("UI References")]
@@ -24,14 +22,13 @@ namespace WeatherApp.UI
         private void Start()
         {
             // Set up button click listener
-            getWeatherButton.onClick.AddListener(OnGetWeatherClicked);
+            getWeatherButton.onClick.AddListener(() => _ = OnGetWeatherClicked());
 
             // Initialize UI state
             SetStatusText("Enter a city name and click Get Weather");
         }
         
-        /// TODO: Students will implement this method
-        private async void OnGetWeatherClicked()
+        private async Task OnGetWeatherClicked()
         {
             // Get city name from input field
             string cityName = cityInputField.text;
@@ -50,10 +47,16 @@ namespace WeatherApp.UI
             
             try
             {
-                // TODO: Call API client to get weather data
-              
-                
-                // TODO: Handle the response
+                var data = await apiClient.GetWeatherDataAsync(cityName);
+                if (data != null && data.IsValid)
+                {
+                    DisplayWeatherData(data);
+                    SetStatusText("Weather data loaded successfully");
+                }
+                else
+                {
+                    SetStatusText("City not found or invalid data");
+                }
             }
             catch (System.Exception ex)
             {
@@ -68,27 +71,15 @@ namespace WeatherApp.UI
             }
         }
         
-        /// TODO: Students will implement this method
         private void DisplayWeatherData(WeatherData weatherData)
         {
-            // TODO: Format and display weather information
-            // Example format:
-            // City: London
-            // Temperature: 15.2°C (Feels like: 14.1°C)
-            // Description: Clear sky
-            // Humidity: 65%
-            // Pressure: 1013 hPa
-
-            string displayText = "";
-            
-            // TODO: Add more weather details
-            if (weatherData.Main != null)
-            {
-                displayText += "";
-                displayText += "";
-            }
-            
+            string displayText = $"City: {weatherData.CityName}\n" +
+            $"Temperature: {weatherData.TemperatureInCelsius:F1}°C (Feels like: {weatherData.Main.FeelsLike - 273.15f:F1}°C)\n" +
+                $"Description: {weatherData.PrimaryDescription}\n" +
+                $"Humidity: {weatherData.Main.Humidity}%\n" +
+                $"Pressure: {weatherData.Main.Pressure} hPa";
             weatherDisplayText.text = displayText;
+            
         }
         
         private void SetStatusText(string message)
